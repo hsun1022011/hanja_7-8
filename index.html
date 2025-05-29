@@ -90,6 +90,16 @@
 
     .card-front {
       transform: rotateY(180deg);
+        font-size: 28px;        /* 글자 크기 */
+        color: #28c5b5;         /* 글자 색 (어두운 회색) */
+        font-weight: bold;      /* 굵은 글자 */
+        font-family: "Arial", sans-serif; /* 폰트 */
+        background-color: #e0f7fa; /* 카드 앞면 배경색 (연한 하늘색) */
+        display: flex;          /* 글자 중앙 정렬 */
+        align-items: center;
+        justify-content: center;
+        padding: 10px;
+        text-align: center;
     }
 
     /* 맞춘 카드 시각 피드백 스타일 */
@@ -199,13 +209,8 @@
         const front = document.createElement("div");
         front.classList.add("card-front");
 
-        if (data.type === "word") {
-          front.textContent = data.content;
-        } else {
-          const img = document.createElement("img");
-          img.src = data.content;
-          front.appendChild(img);
-        }
+        front.textContent = data.content; //텍스트만 사용하게 변경
+
 
         const back = document.createElement("div");
         back.classList.add("card-back");
