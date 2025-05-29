@@ -101,6 +101,13 @@
         padding: 10px;
         text-align: center;
     }
+    .word-card {
+       color: #000000; /* 검정색 */
+    }
+
+    .image-card {
+      color: #007BFF; /* 파란색 */
+    }
 
     /* 맞춘 카드 시각 피드백 스타일 */
     .matched {
@@ -210,6 +217,11 @@
         front.classList.add("card-front");
 
         front.textContent = data.content; //텍스트만 사용하게 변경
+        if (data.type === "word") {
+          front.classList.add("word-card");
+        } else if (data.type === "image") {
+          front.classList.add("image-card");
+        }
 
 
         const back = document.createElement("div");
