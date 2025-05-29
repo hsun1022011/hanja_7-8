@@ -2,308 +2,337 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <title>Matching Card Game</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>도둑이 탄 칸을 맞춰라!</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
+      font-family: sans-serif;
       text-align: center;
-      padding: 20px;
+      margin: 0;
+      padding: 0;
+      background-color: #f8f8f8;
     }
 
-    h1 {
-      margin-bottom: 10px;
-    }
-
-    .controls {
-      margin-bottom: 15px;
-    }
-
-    .score, .timer {
-      font-size: 18px;
-      margin-top: 10px;
-    }
-
-    #startBtn {
-      margin: 15px auto;
-      padding: 10px 30px;
-      font-size: 18px;
-      background-color: #4CAF50;
-      color: white;
-      border: 5px solid #5b3686;
-      border-radius: 40px;
-      cursor: pointer;
-      display: inline-block;
-    }
-
-    #startBtn:hover {
-      background-color: #45a049;
-    }
-
-    .game-board {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-      gap: 10px;
-      margin-top: 20px;
-      max-width: 600px;
-      margin-left: auto;
-      margin-right: auto;
-    }
-
-    .card {
+    .train-wrapper {
       position: relative;
+      width: 90vw;
+      max-width: 900px;
+      margin: 20px auto;
+    }
+
+    .train-img {
       width: 100%;
-      aspect-ratio: 1/1;
-      perspective: 1000px;
+      display: block;
+    }
+
+    .train-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      transform: translate(100px, 45px);
+    }
+
+    .car {
+      position: absolute;
+      width: 12%;
+      min-width: 60px;
+      padding: 8px;
+      border: 2px solid #333;
+      border-radius: 10px;
+      background-color: white;
+      text-align: center;
+      font-size: 0.9rem;
+      pointer-events: auto;
       cursor: pointer;
+      z-index: 5;
+      transition: transform 0.3s ease, background-color 0.3s ease;
     }
 
-    .card-inner {
+    .car.correct-animate {
+      animation: correctPop 0.6s ease forwards;
+    }
+
+    @keyframes correctPop {
+      0% { transform: scale(1); background-color: white; }
+      50% { transform: scale(1.2); background-color: lightgreen; }
+      100% { transform: scale(1); background-color: white; }
+    }
+
+    .debug-box {
       position: absolute;
-      width: 100%;
-      height: 100%;
-      transition: transform 0.6s;
-      transform-style: preserve-3d;
+      width: 12%;
+      height: 25%;
+      background-color: rgba(0, 128, 255, 0.2);
+      border: 1px dashed #0077cc;
+      z-index: 1;
     }
 
-    .card.flipped .card-inner {
-      transform: rotateY(180deg);
+    .selectors {
+      margin: 15px;
     }
 
-    .card-front, .card-back {
-      position: absolute;
-      width: 100%;
-      height: 100%;
-      backface-visibility: hidden;
+    select, button {
+      padding: 6px;
+      font-size: 1rem;
+      margin: 4px;
+    }
+
+    #timerDisplay {
+      font-size: 1.1rem;
+      font-weight: bold;
+      margin: 10px 0;
+    }
+
+    .cannon-container {
       display: flex;
       align-items: center;
-      justify-content: center;
-      border: 2px solid #fff;
-      box-sizing: border-box;
-      background-color: #f2f2f2;
+      justify-content: flex-start;
+      position: relative;
+      height: auto;
+      padding: 20px;
+      gap: 20px;
+    }
+
+    .cannon {
+      width: 20vw;
+      max-width: 100px;
+    }
+
+    #question-img {
+      width: 20vw;
+      max-width: 100px;
+    }
+
+    .bomb {
+      width: 40px;
+      position: absolute;
+      display: none;
+      transition: all 0.8s ease-in-out;
+      z-index: 10;
+    }
+
+    .speech-bubble {
+      position: absolute;
+      background: #fff;
+      border: 2px solid #333;
       padding: 10px;
-      font-size: 36px;
-    }
-/*세모캐릭터배경색 fff*/
-    .card-back {
-      background-color: #fff;
-    }
-
-    .card-front {
-      transform: rotateY(180deg);
-        font-size: 28px;        /* 글자 크기 */
-        color: #28c5b5;         /* 글자 색 (어두운 회색) */
-        font-weight: bold;      /* 굵은 글자 */
-        font-family: "Arial", sans-serif; /* 폰트 */
-        background-color: #e0f7fa; /* 카드 앞면 배경색 (연한 하늘색) */
-        display: flex;          /* 글자 중앙 정렬 */
-        align-items: center;
-        justify-content: center;
-        padding: 10px;
-        text-align: center;
-    }
-    .word-card {
-       color: #000000; /* 검정색 */
-    }
-
-    .image-card {
-      color: #007BFF; /* 파란색 */
-    }
-
-    /* 맞춘 카드 시각 피드백 스타일 */
-    .matched {
-      border: 3px solid #45a049 !important;
-      background-color: #d4edda !important;
-      filter: brightness(110%);
-      cursor: default;
-    }
-
-    img {
-      max-width: 100%;
-      max-height: 100%;
+      border-radius: 10px;
+      display: none;
+      z-index: 20;
+      font-size: 0.8rem;
     }
   </style>
 </head>
 <body>
-  <h1>Matching Card Game</h1>
+  <h1>도둑이 탄 칸을 맞춰라!</h1>
+  <h2 style="font-size: 1rem;">도둑이 보물을 훔쳐 달아났다. 단어를 맞춰 도둑이 탄 기차칸에 폭탄을 던지자!</h2>
 
-  <div class="controls">
-    Unit:
-    <select id="unitSelect">
-      <option value="word_list_unit1.csv">8급</option>
-      <option value="word_list_unit2.csv">7급</option>
-      <option value="word_list_unit3.csv">6급-1</option>
-      <option value="word_list_unit4.csv">6급-2</option>
+  <div class="selectors">
+    <select id="unitSelector">
+      <option value="word_list_unit1.csv">Unit 1</option>
+      <option value="word_list_unit2.csv">Unit 2</option>
+      <option value="word_list_unit3.csv">Unit 3</option>
     </select>
-
-    Level:
-    <select id="levelSelect">
-      <option value="8,45">Level 1 (8쌍, 45초)</option>
-      <option value="11,80" selected>Level 2 (11쌍, 80초)</option>
-      <option value="16,100">Level 3 (16쌍, 100초)</option>
+    <select id="levelSelector">
+      <option value="60">Level 1 (60초)</option>
+      <option value="100">Level 2 (100초)</option>
+      <option value="150">Level 3 (150초)</option>
     </select>
+    <button onclick="loadSelectedCSV()">불러오기</button>
+    <button onclick="toggleDebug()">debug-box 토글</button>
   </div>
 
-  <button id="startBtn">게임시작</button>
+  <div style="margin: 10px;">
+    <label for="xOffset">가로 위치:</label>
+    <input type="range" id="xOffset" min="-100" max="100" value="0">
+    <span id="xValue">0</span>px
+    <label for="yOffset" style="margin-left: 20px;">세로 위치:</label>
+    <input type="range" id="yOffset" min="-100" max="100" value="0">
+    <span id="yValue">0</span>px
+  </div>
 
-  <div class="score" id="score">맞춘 카드: 0 / 0</div>
-  <div class="timer" id="timer">남은 시간: 0초</div>
-  <div class="game-board" id="gameBoard"></div>
+  <div id="timerDisplay">제한 시간: 0초</div>
+
+  <div class="train-wrapper">
+    <img src="images/train_bg.png" class="train-img" />
+    <div class="train-overlay" id="train">
+      <div class="debug-box" style="left:20%; top:28%;"></div>
+      <div class="debug-box" style="left:40%; top:28%;"></div>
+      <div class="debug-box" style="left:60%; top:28%;"></div>
+      <div class="debug-box" style="left:80%; top:28%;"></div>
+    </div>
+  </div>
+
+  <div class="cannon-container">
+    <img src="images/cannon.png" class="cannon" />
+    <img id="question-img" src="" />
+    <img id="bomb" class="bomb" src="images/cutebomb.png" />
+    <div id="speech" class="speech-bubble"></div>
+  </div>
 
   <script>
-    let cardData = [];
-    let matchedPairs = 0;
-    let firstCard = null;
-    let lockBoard = false;
-    let timer = null;
-    let remainingTime = 0;
+    let data = [], score = 0, tries = 0;
+    let startTime, timer, timeLimit = 60;
+    let usedIndexes = [];
 
-    const backImage = "images/back_image.jpg";
-
-    const unitSelect = document.getElementById("unitSelect");
-    const levelSelect = document.getElementById("levelSelect");
-    const gameBoard = document.getElementById("gameBoard");
-    const scoreDisplay = document.getElementById("score");
-    const timerDisplay = document.getElementById("timer");
-    const startBtn = document.getElementById("startBtn");
+    const trainDiv = document.getElementById("train");
+    const bomb = document.getElementById("bomb");
+    const questionImg = document.getElementById("question-img");
+    const speech = document.getElementById("speech");
 
     function shuffle(array) {
-      for (let i = array.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [array[i], array[j]] = [array[j], array[i]];
-      }
+      return array.sort(() => Math.random() - 0.5);
     }
 
-    function updateScore() {
-      scoreDisplay.textContent = `맞춘 카드: ${matchedPairs} / ${cardData.length / 2}`;
-    }
-
-    function updateTimer() {
-      timerDisplay.textContent = `남은 시간: ${remainingTime}초`;
-      if (remainingTime <= 0) {
-        clearInterval(timer);
-        alert(`Good job! ${cardData.length / 2}쌍 중 ${matchedPairs}쌍 맞췄어! 멋진걸!`);
-      }
-      remainingTime--;
-    }
-
-    function createBoard(pairs) {
-      gameBoard.innerHTML = "";
-      matchedPairs = 0;
-      firstCard = null;
-      lockBoard = false;
-      updateScore();
-
-      cardData = [];
-      pairs.forEach((pair, index) => {
-        const pairId = index + 1;
-        cardData.push(
-          { type: "word", content: pair.word, pairId },
-          { type: "image", content: pair.image, pairId }
-        );
+    function parseCSV(text) {
+      return text.trim().split("\n").map(row => {
+        const [word, img] = row.split(",");
+        return { word, img };
       });
+    }
 
-      shuffle(cardData);
+    function loadSelectedCSV() {
+      const fileName = unitSelector.value;
+      timeLimit = parseInt(levelSelector.value);
+      document.getElementById("timerDisplay").innerText = `제한 시간: ${timeLimit}초`;
 
-      cardData.forEach((data, index) => {
-        const card = document.createElement("div");
-        card.classList.add("card");
-        card.dataset.pairId = data.pairId;
-        card.dataset.index = index;
+      fetch(fileName)
+        .then(res => res.text())
+        .then(text => {
+          data = parseCSV(text);
+          usedIndexes = [];
+          score = 0;
+          tries = 0;
+          clearInterval(timer);
+          startTime = Date.now();
+          startTimer();
+          nextQuestion();
+        })
+        .catch(() => alert("CSV 파일을 불러올 수 없습니다."));
+    }
 
-        const inner = document.createElement("div");
-        inner.classList.add("card-inner");
-
-        const front = document.createElement("div");
-        front.classList.add("card-front");
-
-        front.textContent = data.content; //텍스트만 사용하게 변경
-        if (data.type === "word") {
-          front.classList.add("word-card");
-        } else if (data.type === "image") {
-          front.classList.add("image-card");
+    function startTimer() {
+      timer = setInterval(() => {
+        const elapsed = Math.floor((Date.now() - startTime) / 1000);
+        const remaining = timeLimit - elapsed;
+        document.getElementById("timerDisplay").innerText = `남은 시간: ${remaining}초`;
+        if (remaining <= 0) {
+          clearInterval(timer);
+          alert(`시간 종료! ${score}/10명의 도둑을 잡았어!`);
         }
-
-
-        const back = document.createElement("div");
-        back.classList.add("card-back");
-        const backImg = document.createElement("img");
-        backImg.src = backImage;
-        back.appendChild(backImg);
-
-        inner.appendChild(back);
-        inner.appendChild(front);
-        card.appendChild(inner);
-        gameBoard.appendChild(card);
-
-        card.addEventListener("click", () => handleCardClick(card));
-      });
+      }, 1000);
     }
 
-    function handleCardClick(card) {
-      if (lockBoard || card.classList.contains("matched") || card.classList.contains("flipped")) return;
+    function getRandomUnusedIndex() {
+      if (usedIndexes.length >= 10 || usedIndexes.length >= data.length) return null;
+      let idx;
+      do {
+        idx = Math.floor(Math.random() * data.length);
+      } while (usedIndexes.includes(idx));
+      usedIndexes.push(idx);
+      return idx;
+    }
 
-      card.classList.add("flipped");
-
-      if (!firstCard) {
-        firstCard = card;
+    function nextQuestion() {
+      const randIndex = getRandomUnusedIndex();
+      if (randIndex === null) {
+        clearInterval(timer);
+        const timeSpent = Math.floor((Date.now() - startTime) / 1000);
+        alert(`Great! ${timeSpent}초 만에 ${score}/${usedIndexes.length}명의 도둑을 잡았어!`);
         return;
       }
 
-      const isMatch = firstCard.dataset.pairId === card.dataset.pairId;
+      tries = 0;
+      const correct = data[randIndex];
+      const options = shuffle([correct, ...shuffle(data.filter(d => d !== correct)).slice(0, 3)]);
 
-      if (isMatch) {
-        firstCard.classList.add("matched");
-        card.classList.add("matched");
+      trainDiv.querySelectorAll('.car').forEach(el => el.remove());
 
-        // 맞춘 카드도 flipped 유지
-        firstCard.classList.add("flipped");
-        card.classList.add("flipped");
-
-        matchedPairs++;
-        updateScore();
-        firstCard = null;
-
-        if (matchedPairs === cardData.length / 2) {
-          clearInterval(timer);
-          setTimeout(() => {
-            alert(`Good job! ${60 - remainingTime}초 걸렸어! 멋진걸!`);
-          }, 300);
-        }
-      } else {
-        lockBoard = true;
-        setTimeout(() => {
-          card.classList.remove("flipped");
-          firstCard.classList.remove("flipped");
-          firstCard = null;
-          lockBoard = false;
-        }, 1000);
-      }
-    }
-
-    async function loadCSVAndStart() {
-      const [pairCount, timeLimit] = levelSelect.value.split(",").map(Number);
-      remainingTime = timeLimit;
-
-      const selectedCSV = unitSelect.value;
-      const response = await fetch(selectedCSV);
-      const text = await response.text();
-
-      const lines = text.trim().split("\n").slice(1);
-      const parsedPairs = lines.map(line => {
-        const [word, image] = line.split(",");
-        return { word, image };
+      const carPositions = ["20%", "40%", "60%", "80%"];
+      options.forEach((opt, i) => {
+        const car = document.createElement("div");
+        car.className = "car";
+        car.innerText = opt.word;
+        car.style.left = carPositions[i];
+        car.style.top = "28%";
+        car.onclick = () => checkAnswer(opt.word, correct.word, car);
+        trainDiv.appendChild(car);
       });
 
-      shuffle(parsedPairs);
-      const selectedPairs = parsedPairs.slice(0, pairCount);
-
-      createBoard(selectedPairs);
-      clearInterval(timer);
-      timer = setInterval(updateTimer, 1000);
-      updateTimer();
+      questionImg.src = correct.img;
     }
 
-    startBtn.addEventListener("click", loadCSVAndStart);
+    function checkAnswer(selected, correct, carElement) {
+      const cannon = document.querySelector(".cannon");
+      const cannonRect = cannon.getBoundingClientRect();
+      const carRect = carElement.getBoundingClientRect();
+
+      const scrollY = window.scrollY;
+      const scrollX = window.scrollX;
+
+      const cannonStartX = cannonRect.left + cannonRect.width / 2 - 20 + scrollX;
+      const cannonStartY = cannonRect.top - 10 + scrollY;
+
+      const targetX = carRect.left + carRect.width / 2 - 20 + scrollX;
+      const targetY = carRect.top + carRect.height / 2 - 20 + scrollY;
+
+      bomb.style.left = `${cannonStartX}px`;
+      bomb.style.top = `${cannonStartY}px`;
+      bomb.style.display = "block";
+
+      setTimeout(() => {
+        bomb.style.left = `${targetX}px`;
+        bomb.style.top = `${targetY}px`;
+
+        setTimeout(() => {
+          speech.style.left = `${carRect.left + scrollX}px`;
+          speech.style.top = `${carRect.top + scrollY - 40}px`;
+
+          if (selected === correct) {
+            score++;
+            speech.innerText = "Great!";
+            carElement.classList.add("correct-animate");
+          } else {
+            tries++;
+            speech.innerText = tries >= 3 ? "기회를 모두 썼어요!" : `틀렸어요! (${3 - tries}번 남음)`;
+          }
+
+          speech.style.display = "block";
+
+          setTimeout(() => {
+            speech.style.display = "none";
+            bomb.style.display = "none";
+            if (selected === correct || tries >= 3) nextQuestion();
+          }, 1000);
+        }, 800);
+      }, 100);
+    }
+
+    function toggleDebug() {
+      document.querySelectorAll('.debug-box').forEach(box => {
+        box.style.display = box.style.display === 'none' ? 'block' : 'none';
+      });
+    }
+
+    const xSlider = document.getElementById("xOffset");
+    const ySlider = document.getElementById("yOffset");
+    const xValue = document.getElementById("xValue");
+    const yValue = document.getElementById("yValue");
+    const trainOverlay = document.querySelector(".train-overlay");
+
+    function updateOffset() {
+      const x = parseInt(xSlider.value);
+      const y = parseInt(ySlider.value);
+      xValue.textContent = x;
+      yValue.textContent = y;
+      trainOverlay.style.transform = `translate(${x}px, ${y}px)`;
+    }
+
+    xSlider.addEventListener("input", updateOffset);
+    ySlider.addEventListener("input", updateOffset);
   </script>
 </body>
 </html>
